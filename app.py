@@ -6,8 +6,11 @@ from services.transcript_service import (
     transcript_to_text
 )
 from services.chunk_service import chunk_text
-from services.llm_service import summarize
 from services.embedding_service import generate_embeddings
+from services.vector_store import create_vector_store
+from services.retriever_service import retrieve_chunks
+from services.llm_service import summarize, ask_question
+
 
 st.set_page_config(
     page_title="AI Video Analyzer",
@@ -17,13 +20,32 @@ st.set_page_config(
 
 st.title("🎥 AI Video Analyzer")
 
-st.write("Paste a YouTube URL")
+# -----------------------------
+# Initialize Session State
+# -----------------------------
+if "knowledge_ready" not in st.session_state:
+    st.session_state.knowledge_ready = False
 
-video_url = st.text_input("YouTube URL")
+if "plain_text" not in st.session_state:
+    st.session_state.plain_text = ""
+
+if "summary" not in st.session_state:
+    st.session_state.summary = ""
+
+if "chunks" not in st.session_state:
+    st.session_state.chunks = []
+
+if "index" not in st.session_state:
+    st.session_state.index = None
+
+# -----------------------------
+# Analyze Section
+# -----------------------------
+
+video_url = st.text_input("Paste YouTube URL")
 
 if st.button("Analyze Video"):
 
-   
     video_id = extract_video_id(video_url)
 
     if video_id is None:
@@ -31,59 +53,99 @@ if st.button("Analyze Video"):
 
     else:
 
-       
         raw_transcript = get_transcript(video_id)
 
         if raw_transcript is None:
 
             st.warning(
-                "Transcript couldn't be fetched. "
+                "Transcript couldn't be fetched.\n"
                 "YouTube may have blocked the request."
             )
 
         else:
 
-          
+            # Transcript
             plain_text = transcript_to_text(raw_transcript)
 
-            st.success("✅ Transcript Loaded!")
-
-            st.text_area(
-                label="Transcript",
-                value=plain_text,
-                height=300
-            )
-
-            
+            # Chunking
             chunks = chunk_text(plain_text)
 
-            st.subheader("📦 Chunks")
+            # Embeddings
+            embeddings = generate_embeddings(chunks)
 
-            st.write(f"Total Chunks : {len(chunks)}")
+            # Vector Store
+            index = create_vector_store(embeddings)
 
-            for i, chunk in enumerate(chunks):
-
-                with st.expander(f"Chunk {i+1}"):
-
-                    st.write(chunk)
-                    
-
-                    embeddings = generate_embeddings(chunks)
-
-                st.subheader("Embeddings")
-
-                st.write(f"Total Embeddings: {len(embeddings)}")
-
-                st.write("Dimension of one embedding:")
-
-                st.write(len(embeddings[0]))
-           
+            # Summary
             with st.spinner("Generating Summary..."):
-
                 summary = summarize(plain_text)
 
-            st.subheader("📝 Summary")
+            # Save in Session
+            st.session_state.plain_text = plain_text
+            st.session_state.summary = summary
+            st.session_state.chunks = chunks
+            st.session_state.index = index
+            st.session_state.knowledge_ready = True
 
-            st.write(summary)
+            st.success("✅ Knowledge Base Created Successfully!")
 
-            
+# -----------------------------
+# Display Stored Results
+# -----------------------------
+
+if st.session_state.knowledge_ready:
+
+    st.subheader("📄 Transcript")
+
+    st.text_area(
+        "Transcript",
+        st.session_state.plain_text,
+        height=250
+    )
+
+    st.subheader("📦 Chunks")
+
+    st.write(f"Total Chunks : {len(st.session_state.chunks)}")
+
+    for i, chunk in enumerate(st.session_state.chunks):
+
+        with st.expander(f"Chunk {i+1}"):
+
+            st.write(chunk)
+
+    st.subheader("📝 Summary")
+
+    st.write(st.session_state.summary)
+
+    st.divider()
+
+    st.subheader("💬 Chat with the Video")
+
+    question = st.text_input("Ask a Question")
+
+    if st.button("Ask"):
+
+        retrieved_chunks = retrieve_chunks(
+            question,
+            st.session_state.index,
+            st.session_state.chunks
+        )
+
+        context = "\n\n".join(retrieved_chunks)
+
+        answer = ask_question(
+            question,
+            context
+        )
+
+        st.subheader("📚 Retrieved Chunks")
+
+        for i, chunk in enumerate(retrieved_chunks):
+
+            with st.expander(f"Retrieved Chunk {i+1}"):
+
+                st.write(chunk)
+
+        st.subheader("🤖 Answer")
+
+        st.write(answer)
