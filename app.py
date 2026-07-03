@@ -278,3 +278,5 @@ if st.session_state.vector_store is not None:
         with st.chat_message("assistant"):
 
             st.markdown(answer)
+
+            #
