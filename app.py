@@ -12,7 +12,7 @@ from services.vector_store import (
     retrieve_chunks
 )
 from services.llm_service import (
-    summarize,
+    analyze_video,
     ask_question
 )
 
@@ -24,6 +24,7 @@ st.set_page_config(
     layout="wide"
 )
 
+#session state
 
 if "transcript" not in st.session_state:
     st.session_state.transcript = ""
@@ -31,11 +32,28 @@ if "transcript" not in st.session_state:
 if "summary" not in st.session_state:
     st.session_state.summary = ""
 
+if "takeaways" not in st.session_state:
+    st.session_state.takeaways = []
+
+if "topics" not in st.session_state:
+    st.session_state.topics = []
+
 if "chunks" not in st.session_state:
     st.session_state.chunks = []
 
 if "vector_store" not in st.session_state:
     st.session_state.vector_store = None
+
+#transcript popup
+
+@st.dialog("📜 Full Transcript", width="large")
+def show_transcript():
+
+    st.text_area(
+        "",
+        st.session_state.transcript,
+        height=500
+    )
 
 #side bar
 
@@ -70,7 +88,6 @@ Pipeline
 
 #Main app
 
-
 #header
 
 st.title("🎥 AI Knowledge Assistant")
@@ -87,7 +104,7 @@ video_url = st.text_input(
     "🔗 Paste YouTube URL"
 )
 
-#extract video id, chunks, embeddings
+#extract video id, transcript, ai analysis, chunks and embeddings
 
 if st.button(
     "🚀 Analyze Video",
@@ -118,11 +135,17 @@ if st.button(
 
             st.session_state.transcript = plain_text
 
-            with st.spinner("Generating Summary..."):
+            #generate ai analysis
 
-                summary = summarize(plain_text)
+            with st.spinner("Analyzing Video..."):
 
-            st.session_state.summary = summary
+                analysis = analyze_video(plain_text)
+
+            st.session_state.summary = analysis["summary"]
+            st.session_state.takeaways = analysis["takeaways"]
+            st.session_state.topics = analysis["topics"]
+
+            #build vector database
 
             with st.spinner("Building Knowledge Base..."):
 
@@ -142,32 +165,72 @@ if st.button(
                 "✅ Video Analysis Complete!"
             )
 
-#trancript
-
-if st.session_state.transcript:
-
-    st.divider()
-
-    st.subheader("📜 Video Transcript")
-
-    st.text_area(
-        "",
-        st.session_state.transcript,
-        height=350
-    )
-
-# AI summary
+#ai summary
 
 if st.session_state.summary:
 
     st.divider()
 
-    st.subheader("📄 Executive Summary")
+    st.subheader("📝 AI Summary")
 
-    st.write(st.session_state.summary)
+    st.write(
+        st.session_state.summary
+    )
 
+#key takeaways
 
-#ask Question
+if st.session_state.takeaways:
+
+    st.divider()
+
+    st.subheader("💡 Key Takeaways")
+
+    for takeaway in st.session_state.takeaways:
+
+        st.success(
+            takeaway
+        )
+
+#main topics
+
+if st.session_state.topics:
+
+    st.divider()
+
+    st.subheader("🧠 Main Topics")
+
+    cols = st.columns(2)
+
+    for i, topic in enumerate(
+        st.session_state.topics
+    ):
+
+        with cols[i % 2]:
+
+            st.info(
+                topic
+            )
+
+#transcript
+
+if st.session_state.transcript:
+
+    st.divider()
+
+    st.subheader("📜 Transcript")
+
+    st.write(
+        "The full transcript is hidden to keep the interface clean."
+    )
+
+    if st.button(
+        "📜 View Full Transcript",
+        use_container_width=True
+    ):
+
+        show_transcript()
+
+#ask question
 
 if st.session_state.vector_store is not None:
 
@@ -192,6 +255,8 @@ if st.session_state.vector_store is not None:
 
         else:
 
+            #retrieve relevant chunks
+
             with st.spinner(
                 "Searching Knowledge Base..."
             ):
@@ -206,6 +271,8 @@ if st.session_state.vector_store is not None:
                     retrieved_chunks
                 )
 
+            #generate answer
+
             with st.spinner(
                 "Generating Answer..."
             ):
@@ -217,4 +284,7 @@ if st.session_state.vector_store is not None:
 
             st.subheader("🤖 AI Answer")
 
-            st.write(answer)
+            st.write(
+                answer
+            )
+            
