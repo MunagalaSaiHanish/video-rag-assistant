@@ -13,28 +13,56 @@ client = OpenAI(
     base_url="https://openrouter.ai/api/v1"
 )
 
+#generate detailed summary
 
-#analyze video
-
-def analyze_video(transcript):
+def summarize(transcript):
 
     prompt = f"""
-You are an expert AI Video Analyst.
+You are an AI assistant. 
+Summarize the following transcript into concise bullet points.
 
-Analyze the following YouTube transcript.
+Include points and hifhlight the important points
 
-Return ONLY valid JSON in this format:
+Transcript:
+
+{transcript}
+"""
+
+    response = client.chat.completions.create(
+        model="qwen/qwen3-32b",
+        temperature=0.3,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    )
+
+    return response.choices[0].message.content
+
+
+#generate key takeaways and topics
+
+def generate_insights(summary):
+
+    prompt = f"""
+Read the following summary.
+
+Generate ONLY valid JSON.
+
+Format:
 
 {{
-    "summary": "...",
-    "takeaways": [
+    "takeaways":[
         "...",
         "...",
         "...",
         "...",
         "..."
     ],
-    "topics": [
+
+    "topics":[
         "...",
         "...",
         "...",
@@ -44,27 +72,15 @@ Return ONLY valid JSON in this format:
 
 Instructions:
 
-1. Write a DETAILED AI Summary.
-- Explain the video thoroughly.
-- Cover all major concepts.
-- The summary should be detailed study notes.
-- Write multiple well-structured paragraphs.
-- Do NOT make it short.
-- Include important explanations and examples from the video.
+1. Generate 5 important key takeaways.
 
-2. Generate 5-8 key takeaways.
-
-3. Generate 4-8 main topics.
+2. Generate 4-7 main topics.
 
 Return ONLY valid JSON.
 
-Do NOT use markdown.
+Summary:
 
-Do NOT wrap the JSON inside ```json.
-    
-Transcript:
-
-{transcript}
+{summary}
 """
 
     response = client.chat.completions.create(
@@ -72,20 +88,18 @@ Transcript:
         temperature=0.2,
         messages=[
             {
-                "role": "user",
-                "content": prompt
+                "role":"user",
+                "content":prompt
             }
         ]
     )
 
     content = response.choices[0].message.content.strip()
 
-    #remove markdown if model returns it
-
     if content.startswith("```"):
 
-        content = content.replace("```json", "")
-        content = content.replace("```", "")
+        content = content.replace("```json","")
+        content = content.replace("```","")
         content = content.strip()
 
     try:
@@ -95,19 +109,11 @@ Transcript:
     except json.JSONDecodeError:
 
         return {
-            "summary": content,
-            "takeaways": [],
-            "topics": []
+
+            "takeaways":[],
+
+            "topics":[]
         }
-
-
-#summary
-
-def summarize(text):
-
-    result = analyze_video(text)
-
-    return result["summary"]
 
 
 #ask question
@@ -136,8 +142,8 @@ reply with:
         temperature=0.2,
         messages=[
             {
-                "role": "user",
-                "content": prompt
+                "role":"user",
+                "content":prompt
             }
         ]
     )
