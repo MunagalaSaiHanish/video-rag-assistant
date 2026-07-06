@@ -22,19 +22,17 @@ class MemoryManager:
             }
         )
 
-    # get conversation
-
     # get recent conversation
 
-def get_messages(
-    self,
-    window_size=10
-):
+    def get_messages(
+        self,
+        window_size=10
+    ):
 
-    return self.messages[-window_size:]
+        return self.messages[-window_size:]
 
     # clear conversation
 
-def clear(self):
+    def clear(self):
 
-    self.messages = []
+        self.messages = []
