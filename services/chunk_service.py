@@ -85,3 +85,38 @@ def chunk_transcript(transcript_segments):
             )
 
     return chunks
+
+# chunk document objects while preserving metadata
+
+def chunk_documents(documents):
+
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200,
+        separators=[
+            "\n\n",
+            "\n",
+            ". ",
+            " ",
+            ""
+        ]
+    )
+
+    chunks = []
+
+    for document in documents:
+
+        split_chunks = text_splitter.split_text(
+            document["text"]
+        )
+
+        for chunk in split_chunks:
+
+            chunks.append(
+                {
+                    "text": chunk,
+                    "metadata": document["metadata"]
+                }
+            )
+
+    return chunks

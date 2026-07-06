@@ -24,6 +24,7 @@ from services.llm_service import (
 )
 from services.youtube_metadata import get_video_metadata
 from services.export_service import generate_pdf
+from services.context_builder import build_context
 
 #page setup
 
@@ -300,21 +301,21 @@ if st.session_state.vector_store is not None:
             question,
             st.session_state.vector_store,
             st.session_state.metadata_chunks
-            )
+        )
 
-            context = "\n\n".join(
-            chunk["text"]
-            for chunk in retrieved_chunks
-            )
+        context_data = build_context(
+         retrieved_chunks
+        )
 
         with st.spinner(
             "Thinking..."
         ):
 
             answer = ask_question(
-                question,
-                context
-            )
+    question=question,
+    context=context_data["context"],
+    messages=st.session_state.messages[-10:]
+)
 
         st.session_state.messages.append(
             {
@@ -327,18 +328,20 @@ if st.session_state.vector_store is not None:
 
             st.markdown(answer)
 
-            st.caption("📍 Mentioned in video")
+        st.caption("📚 Sources")
 
-            for chunk in retrieved_chunks:
+        for source in context_data["sources"]:
 
-                start = int(chunk["start"])
+            st.write(source)    
 
-                minutes = start // 60
+            start = int(chunk["start"])
 
-                seconds = start % 60
+            minutes = start // 60
 
-                st.write(
-                 f"• {minutes:02}:{seconds:02}"
+            seconds = start % 60
+
+            st.write(
+                f"• {minutes:02}:{seconds:02}"
                     )
 
             

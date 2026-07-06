@@ -3,6 +3,7 @@ import json
 
 from dotenv import load_dotenv
 from openai import OpenAI
+from services.prompt_builder import build_prompt
 
 #load environment variables
 
@@ -118,32 +119,28 @@ Summary:
 
 #ask question
 
-def ask_question(question, context):
+def ask_question(
+    question,
+    context,
+    messages=None
+):
 
-    prompt = f"""
-Answer ONLY using the context below.
+    if messages is None:
+        messages = []
 
-Context:
-
-{context}
-
-Question:
-
-{question}
-
-If the answer is not present in the context,
-reply with:
-
-"I couldn't find that information in the video."
-"""
+    prompt = build_prompt(
+        messages=messages,
+        context=context,
+        question=question
+    )
 
     response = client.chat.completions.create(
         model="qwen/qwen3-32b",
         temperature=0.2,
         messages=[
             {
-                "role":"user",
-                "content":prompt
+                "role": "user",
+                "content": prompt
             }
         ]
     )

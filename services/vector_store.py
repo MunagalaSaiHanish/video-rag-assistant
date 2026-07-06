@@ -19,40 +19,18 @@ def create_vector_store(embeddings):
     return index
 
 
-#retrieve plain text chunks
+# retrieve document chunks
 
-def retrieve_chunks(question, index, chunks, top_k=3):
-
-    question_embedding = model.encode([question])
-
-    question_embedding = np.array(question_embedding).astype("float32")
-
-    distances, indices = index.search(
-        question_embedding,
-        top_k
-    )
-
-    retrieved_chunks = []
-
-    for idx in indices[0]:
-
-        retrieved_chunks.append(
-            chunks[idx]
-        )
-
-    return retrieved_chunks
-
-
-#retrieve chunks with metadata
-
-def retrieve_chunks_with_metadata(
+def retrieve_documents(
     question,
     index,
-    chunks,
+    vector_records,
     top_k=3
 ):
 
-    question_embedding = model.encode([question])
+    question_embedding = model.encode(
+        [question]
+    )
 
     question_embedding = np.array(
         question_embedding
@@ -67,12 +45,12 @@ def retrieve_chunks_with_metadata(
 
     for idx in indices[0]:
 
+        if idx == -1:
+            continue
+
         results.append(
-            {
-                "text": chunks[idx]["text"],
-                "start": chunks[idx]["start"],
-                "end": chunks[idx]["end"]
-            }
+            vector_records[idx]
         )
 
     return results
+
