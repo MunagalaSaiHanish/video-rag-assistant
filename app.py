@@ -3,13 +3,19 @@ import streamlit as st
 from services.youtube_service import extract_video_id
 from services.transcript_service import (
     get_transcript,
-    transcript_to_text
+    transcript_to_text,
+    transcript_with_timestamps
 )
-from services.chunk_service import chunk_text
-from services.embedding_service import generate_embeddings
+
+from services.chunk_service import (
+    chunk_text,
+    chunk_transcript
+)
+
 from services.vector_store import (
     create_vector_store,
-    retrieve_chunks
+    retrieve_chunks,
+    retrieve_chunks_with_metadata
 )
 from services.llm_service import (
     summarize,
@@ -43,6 +49,7 @@ if "topics" not in st.session_state:
 
 if "chunks" not in st.session_state:
     st.session_state.chunks = []
+    
 
 if "vector_store" not in st.session_state:
     st.session_state.vector_store = None
@@ -52,6 +59,9 @@ if "messages" not in st.session_state:
 
 if "metadata" not in st.session_state:
     st.session_state.metadata = None
+
+if "metadata_chunks" not in st.session_state:
+    st.session_state.metadata_chunks = []
 
 #transcript popup
 
@@ -123,8 +133,9 @@ if st.button("🚀 Analyze Video", use_container_width=True):
 
             plain_text = transcript_to_text(raw_transcript)
             st.session_state.transcript = plain_text
-
-            #generate detailed summary
+            timestamp_segments = transcript_with_timestamps(
+             raw_transcript
+            )
 
             with st.spinner("Generating AI Summary..."):
                 summary = summarize(plain_text)
@@ -142,11 +153,22 @@ if st.button("🚀 Analyze Video", use_container_width=True):
             #build vector database
 
             with st.spinner("Building Knowledge Base..."):
-                chunks = chunk_text(plain_text)
-                embeddings = generate_embeddings(chunks)
+                metadata_chunks = chunk_transcript(
+                timestamp_segments
+                )
+
+                chunks = [
+                chunk["text"]
+                for chunk in metadata_chunks
+                ]
+
+                embeddings = generate_embeddings(
+                chunks
+                )
                 vector_store = create_vector_store(embeddings)
 
             st.session_state.chunks = chunks
+            st.session_state.metadata_chunks = metadata_chunks
             st.session_state.vector_store = vector_store
 
             st.success("✅ Video Analysis Complete!")
@@ -274,14 +296,15 @@ if st.session_state.vector_store is not None:
             "Searching Knowledge Base..."
         ):
 
-            retrieved_chunks = retrieve_chunks(
-                question,
-                st.session_state.vector_store,
-                st.session_state.chunks
+            retrieved_chunks = retrieve_chunks_with_metadata(
+            question,
+            st.session_state.vector_store,
+            st.session_state.metadata_chunks
             )
 
             context = "\n\n".join(
-                retrieved_chunks
+            chunk["text"]
+            for chunk in retrieved_chunks
             )
 
         with st.spinner(
@@ -303,5 +326,19 @@ if st.session_state.vector_store is not None:
         with st.chat_message("assistant"):
 
             st.markdown(answer)
+
+            st.caption("📍 Mentioned in video")
+
+            for chunk in retrieved_chunks:
+
+                start = int(chunk["start"])
+
+                minutes = start // 60
+
+                seconds = start % 60
+
+                st.write(
+                 f"• {minutes:02}:{seconds:02}"
+                    )
 
             
