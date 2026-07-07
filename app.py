@@ -12,10 +12,10 @@ from services.chunk_service import (
     chunk_transcript
 )
 
+from services.embedding_service import generate_embeddings
 from services.vector_store import (
     create_vector_store,
-    retrieve_chunks,
-    retrieve_chunks_with_metadata
+    retrieve_documents
 )
 from services.llm_service import (
     summarize,
@@ -30,7 +30,7 @@ from services.context_builder import build_context
 
 st.set_page_config(
     page_title="AI Knowledge Assistant",
-    page_icon="🎥",
+    page_icon=".assets/lumina logo.png",
     layout="wide"
 )
 
@@ -297,15 +297,13 @@ if st.session_state.vector_store is not None:
             "Searching Knowledge Base..."
         ):
 
-            retrieved_chunks = retrieve_chunks_with_metadata(
-            question,
-            st.session_state.vector_store,
-            st.session_state.metadata_chunks
-        )
+            retrieved_chunks = retrieve_documents(
+                question,
+                st.session_state.vector_store,
+                st.session_state.metadata_chunks
+            )
 
-        context_data = build_context(
-         retrieved_chunks
-        )
+            context_data = build_context(retrieved_chunks)
 
         with st.spinner(
             "Thinking..."
@@ -331,17 +329,14 @@ if st.session_state.vector_store is not None:
         st.caption("📚 Sources")
 
         for source in context_data["sources"]:
+            st.write(source)
 
-            st.write(source)    
+        st.caption("📍 Mentioned in video")
 
+        for chunk in retrieved_chunks:
             start = int(chunk["start"])
-
             minutes = start // 60
-
             seconds = start % 60
-
-            st.write(
-                f"• {minutes:02}:{seconds:02}"
-                    )
+            st.write(f"• {minutes:02}:{seconds:02}")
 
             
