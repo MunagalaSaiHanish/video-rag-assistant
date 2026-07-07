@@ -1,18 +1,40 @@
-import fitz
+# build prompt for conversational rag
 
 
-def extract_pdf_text(pdf_file):
+def build_prompt(
+    messages,
+    context,
+    question
+):
 
-    document = fitz.open(stream=pdf_file.read(), filetype="pdf")
+    prompt = """
+You are Lumina AI.
 
-    full_text = ""
+Answer ONLY using the retrieved context.
 
-    for page in document:
+If the answer is not found,
+reply that you couldn't find it in the knowledge base.
 
-        full_text += page.get_text()
+"""
 
-        full_text += "\n"
+    if messages:
 
-    document.close()
+        prompt += "\nConversation History\n\n"
 
-    return full_text
+        for message in messages:
+
+            role = message["role"].capitalize()
+
+            prompt += (
+                f"{role}: {message['content']}\n"
+            )
+
+    prompt += "\nRetrieved Context\n\n"
+
+    prompt += context
+
+    prompt += "\n\nCurrent Question\n\n"
+
+    prompt += question
+
+    return prompt

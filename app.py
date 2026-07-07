@@ -25,6 +25,8 @@ from services.llm_service import (
 from services.youtube_metadata import get_video_metadata
 from services.export_service import generate_pdf
 from services.context_builder import build_context
+from services.pdf_service import extract_pdf_text
+from services.knowledge_base import KnowledgeBase
 
 #page setup
 
@@ -52,8 +54,9 @@ if "chunks" not in st.session_state:
     st.session_state.chunks = []
     
 
-if "vector_store" not in st.session_state:
-    st.session_state.vector_store = None
+if "knowledge_base" not in st.session_state:
+
+    st.session_state.knowledge_base = KnowledgeBase()   
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -110,6 +113,21 @@ st.divider()
 #input of youtube url
 
 video_url = st.text_input("🔗 Paste YouTube URL")
+
+uploaded_pdf = st.file_uploader(
+    "📄 Upload PDF",
+    type=["pdf"]
+)
+
+if uploaded_pdf:
+
+    pdf_text = extract_pdf_text(
+        uploaded_pdf
+    )
+
+    st.success("PDF Loaded Successfully")
+
+    st.write(pdf_text[:500])
 
 #extract transcript, summary and build vector database
 
