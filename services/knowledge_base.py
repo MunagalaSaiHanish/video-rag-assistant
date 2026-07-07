@@ -2,24 +2,23 @@ import numpy as np
 
 from services.chunk_service import chunk_text
 from services.embedding_service import generate_embeddings
-from services.vector_store import (
-    create_vector_store,
-    retrieve_documents
-)
+from services.vector_store import create_vector_store
+from services.retriever import Retriever
 
 
 class KnowledgeBase:
 
     def __init__(self):
+
         self.vector_records = []
         self.index = None
-
 
     def add_document(
         self,
         text,
         metadata
     ):
+
         chunks = chunk_text(text)
 
         embeddings = generate_embeddings(chunks)
@@ -47,6 +46,7 @@ class KnowledgeBase:
             self.index = create_vector_store(
                 embeddings
             )
+
         else:
 
             self.index.add(
@@ -63,14 +63,18 @@ class KnowledgeBase:
 
             return []
 
-        return retrieve_documents(
-            question=question,
-            index=self.index,
-            vector_records=self.vector_records,
-            top_k=top_k
+        retriever = Retriever(
+            self.index,
+            self.vector_records
         )
+
+        return retriever.search(
+            question,
+            top_k
+        )
+
     def clear(self):
 
-        self.vector_records = []
+        self.vector_records.clear()
 
         self.index = None
