@@ -27,6 +27,7 @@ from services.export_service import generate_pdf
 from services.context_builder import build_context
 from services.pdf_service import extract_pdf_text
 from services.knowledge_base import KnowledgeBase
+from services.memory_service import MemoryService
 
 #page setup
 
@@ -58,8 +59,11 @@ if "knowledge_base" not in st.session_state:
 
     st.session_state.knowledge_base = KnowledgeBase()   
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+
+
+if "memory" not in st.session_state:
+
+    st.session_state.memory = MemoryService()
 
 if "metadata" not in st.session_state:
     st.session_state.metadata = None
@@ -289,7 +293,7 @@ if st.session_state.vector_store is not None:
 
     #display previous messages
 
-    for message in st.session_state.messages:
+    for message in st.session_state.memory.get_messages():
 
         with st.chat_message(message["role"]):
 
@@ -300,12 +304,10 @@ if st.session_state.vector_store is not None:
     )
 
     if question:
-        st.session_state.messages.append(
-            {
-                "role": "user",
-                "content": question
-            }
-        )
+        st.session_state.memory.add_message(
+            "user",
+             question
+)
 
         with st.chat_message("user"):
 
@@ -330,15 +332,13 @@ if st.session_state.vector_store is not None:
             answer = ask_question(
     question=question,
     context=context_data["context"],
-    messages=st.session_state.messages[-10:]
+    messages=st.session_state.memory.get_recent_messages()
 )
 
-        st.session_state.messages.append(
-            {
-                "role": "assistant",
-                "content": answer
-            }
-        )
+        st.session_state.memory.add_message(
+    "assistant",
+    answer
+)
 
         with st.chat_message("assistant"):
 

@@ -1,13 +1,8 @@
-# conversation memory manager
-
-
-class MemoryManager:
+class MemoryService:
 
     def __init__(self):
 
         self.messages = []
-
-    # add message
 
     def add_message(
         self,
@@ -22,17 +17,17 @@ class MemoryManager:
             }
         )
 
-    # get recent conversation
+    def get_messages(self):
 
-    def get_messages(
+        return self.messages
+
+    def get_recent_messages(
         self,
-        window_size=10
+        limit=10
     ):
 
-        return self.messages[-window_size:]
-
-    # clear conversation
+        return self.messages[-limit:]
 
     def clear(self):
 
-        self.messages = []
+        self.messages.clear()
