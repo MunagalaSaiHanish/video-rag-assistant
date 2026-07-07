@@ -7,7 +7,7 @@ from openai import OpenAI
 from services.prompt_builder import build_prompt
 
 # ---------------------------------------------------------
-# Load Environment Variables
+# Environment
 # ---------------------------------------------------------
 
 load_dotenv()
@@ -19,58 +19,79 @@ client = OpenAI(
 
 MODEL = "qwen/qwen3-32b"
 
+SYSTEM_PROMPT = """
+You are Lumina AI.
+
+You are an intelligent Knowledge Assistant.
+
+Rules:
+
+- Answer only using the provided context.
+- If the answer is not present, clearly say that you couldn't find it.
+- Never hallucinate facts.
+- Be concise and professional.
+- When possible, organize answers using bullet points.
+"""
+
 # ---------------------------------------------------------
-# Generate Summary
+# Summary
 # ---------------------------------------------------------
 
 def summarize(text):
 
     prompt = f"""
-You are an expert AI assistant.
+Generate a professional summary.
 
-Generate a professional summary of the following content.
-
-Requirements:
+Requirements
 
 - Clear
 - Concise
+- Preserve important ideas
 - Easy to understand
-- Preserve important concepts
 
-Content:
+Content
 
 {text}
 """
 
-    response = client.chat.completions.create(
+    try:
 
-        model=MODEL,
+        response = client.chat.completions.create(
 
-        temperature=0.3,
+            model=MODEL,
 
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    )
+            temperature=0.3,
 
-    return response.choices[0].message.content
+            messages=[
+                {
+                    "role": "system",
+                    "content": SYSTEM_PROMPT
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+
+        )
+
+        return response.choices[0].message.content
+
+    except Exception:
+
+        return "Unable to generate summary."
 
 
 # ---------------------------------------------------------
-# Generate Key Takeaways & Topics
+# Insights
 # ---------------------------------------------------------
 
 def generate_insights(summary):
 
     prompt = f"""
-Read the following summary.
-
 Return ONLY valid JSON.
 
-Format:
+Schema
 
 {{
     "takeaways":[
@@ -80,7 +101,6 @@ Format:
         "...",
         "..."
     ],
-
     "topics":[
         "...",
         "...",
@@ -90,37 +110,44 @@ Format:
     ]
 }}
 
-Summary:
+Do not include markdown.
+
+Summary
 
 {summary}
 """
 
-    response = client.chat.completions.create(
+    try:
 
-        model=MODEL,
+        response = client.chat.completions.create(
 
-        temperature=0.2,
+            model=MODEL,
 
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    )
+            temperature=0.2,
 
-    content = response.choices[0].message.content.strip()
+            messages=[
+                {
+                    "role": "system",
+                    "content": SYSTEM_PROMPT
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
 
-    if content.startswith("```"):
-
-        content = (
-            content
-            .replace("```json", "")
-            .replace("```", "")
-            .strip()
         )
 
-    try:
+        content = response.choices[0].message.content.strip()
+
+        if content.startswith("```"):
+
+            content = (
+                content
+                .replace("```json", "")
+                .replace("```", "")
+                .strip()
+            )
 
         return json.loads(content)
 
@@ -136,7 +163,7 @@ Summary:
 
 
 # ---------------------------------------------------------
-# Ask Question
+# Chat
 # ---------------------------------------------------------
 
 def ask_question(
@@ -163,19 +190,32 @@ def ask_question(
 
     )
 
-    response = client.chat.completions.create(
+    try:
 
-        model=MODEL,
+        response = client.chat.completions.create(
 
-        temperature=0.2,
+            model=MODEL,
 
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
+            temperature=0.2,
 
-    )
+            messages=[
+                {
+                    "role": "system",
+                    "content": SYSTEM_PROMPT
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
 
-    return response.choices[0].message.content
+        )
+
+        return response.choices[0].message.content
+
+    except Exception:
+
+        return (
+            "Sorry, I couldn't generate a response. "
+            "Please try again."
+        )

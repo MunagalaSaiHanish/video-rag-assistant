@@ -28,6 +28,7 @@ from services.context_builder import build_context
 from services.pdf_service import extract_pdf_text
 from services.knowledge_base import KnowledgeBase
 from services.memory_service import MemoryService
+from services.website_service import (extract_website_text)
 
 #page setup
 
@@ -123,6 +124,10 @@ uploaded_pdf = st.file_uploader(
     type=["pdf"]
 )
 
+website_url = st.text_input(
+    "🌐 Paste Website URL"
+)
+
 if uploaded_pdf:
 
     pdf_text = extract_pdf_text(
@@ -135,7 +140,7 @@ if uploaded_pdf:
 
 #extract transcript, summary and build vector database
 
-if st.button("🚀 Analyze Video", use_container_width=True):
+if st.button("🚀 Analyze", use_container_width=True):
 
     video_id = extract_video_id(video_url)
 
@@ -356,5 +361,6 @@ if st.session_state.vector_store is not None:
             minutes = start // 60
             seconds = start % 60
             st.write(f"• {minutes:02}:{seconds:02}")
+            
 
             

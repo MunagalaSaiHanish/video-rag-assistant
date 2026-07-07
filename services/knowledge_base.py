@@ -11,7 +11,9 @@ class KnowledgeBase:
     def __init__(self):
 
         self.vector_records = []
+
         self.index = None
+
 
     def add_document(
         self,
@@ -19,26 +21,69 @@ class KnowledgeBase:
         metadata
     ):
 
+        if not text.strip():
+
+            return
+
         chunks = chunk_text(text)
 
-        embeddings = generate_embeddings(chunks)
-        embeddings = np.array(
-            embeddings
-        ).astype("float32")
+        if not chunks:
 
-        new_records = []
+            return
+
+        records = []
 
         for chunk in chunks:
 
-            new_records.append(
+            records.append(
                 {
                     "text": chunk,
                     "metadata": metadata
                 }
             )
 
+        self._add_records(
+            records
+        )
+
+
+    def add_chunks(
+        self,
+        chunks
+    ):
+
+        if not chunks:
+
+            return
+
+        self._add_records(
+            chunks
+        )
+
+
+    def _add_records(
+        self,
+        records
+    ):
+
+        texts = []
+
+        for record in records:
+
+            texts.append(
+                record["text"]
+            )
+
+        embeddings = generate_embeddings(
+            texts
+        )
+
+        embeddings = np.array(
+            embeddings
+        ).astype("float32")
+
         self.vector_records.extend(
-            new_records
+            records
         )
 
         if self.index is None:
@@ -52,6 +97,7 @@ class KnowledgeBase:
             self.index.add(
                 embeddings
             )
+
 
     def retrieve(
         self,
@@ -72,6 +118,7 @@ class KnowledgeBase:
             question,
             top_k
         )
+
 
     def clear(self):
 
