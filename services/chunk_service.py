@@ -1,13 +1,8 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-# ---------------------------------------------------------
-# Chunk Configuration
-# ---------------------------------------------------------
 
 CHUNK_SIZE = 1000
-
 CHUNK_OVERLAP = 200
-
 SEPARATORS = [
     "\n\n",
     "\n",
@@ -30,9 +25,6 @@ def get_text_splitter():
     )
 
 
-# ---------------------------------------------------------
-# Chunk Plain Text
-# ---------------------------------------------------------
 
 def chunk_text(text):
 
@@ -45,9 +37,6 @@ def chunk_text(text):
     return text_splitter.split_text(text)
 
 
-# ---------------------------------------------------------
-# Chunk Transcript (Preserve Timestamps)
-# ---------------------------------------------------------
 
 def chunk_transcript(transcript_segments):
 
@@ -111,10 +100,6 @@ def chunk_transcript(transcript_segments):
 
     return chunks
 
-
-# ---------------------------------------------------------
-# Chunk Documents (Preserve Metadata)
-# ---------------------------------------------------------
 
 def chunk_documents(documents):
 
