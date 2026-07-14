@@ -14,10 +14,14 @@ load_dotenv()
 
 client = OpenAI(
     api_key=os.getenv("OPENROUTER_API_KEY"),
-    base_url="https://openrouter.ai/api/v1"
+    base_url="https://openrouter.ai/api/v1",
+    timeout=200
 )
 
-MODEL = "qwen/qwen3-32b"
+MODEL = os.getenv(
+    "OPENROUTER_MODEL",
+    "qwen/qwen3-32b"
+)
 
 SYSTEM_PROMPT = """
 You are Lumina AI.
@@ -44,7 +48,8 @@ You are Lumina AI.
 
 Create a Summary of the following content.
 Summarize the context in detail
-Try to give more summary
+Try to give more summary as much as possible
+Generate a comprehensive summary while preserving all important concepts and details.
 Instructions:
 
 - Cover ALL major concepts.
@@ -89,9 +94,11 @@ Content:
 
         return response.choices[0].message.content
 
-    except Exception:
+    except Exception as e:
 
-        return "Unable to generate summary."
+        print(f"LLM Error: {e}")
+
+    return "Unable to generate summary."
 
 
 # ---------------------------------------------------------
