@@ -529,7 +529,7 @@ def clear_workspace():
 # Sidebar — the lamp
 # ---------------------------------------------------------------------------
 with st.sidebar:
-    st.image("assets/lumixa logo.png", use_container_width=True)
+    st.image("assets/Lumixa logo.png", use_container_width=True)
     st.divider()
 
     st.markdown('<div class="eyebrow">Session</div>', unsafe_allow_html=True)
