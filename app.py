@@ -863,7 +863,7 @@ with center_panel:
 # the page by Streamlit itself (no manual floating container). This keeps
 # it from ever overlapping or eating into the reading pane's space.
 # ---------------------------------------------------------------------------
-question = st.chat_input("Ask about your sources...")
+question = st.chat_input("Ask Lumixa...")
 
 if question:
     if st.session_state.knowledge_base.index is None:
