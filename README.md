@@ -226,14 +226,15 @@ http://localhost:8501
 3. Generate AI summary.
 4. Chat with the video.
 
+
 </td>
 
 <td width="25%" valign="top">
 
 ### 📄 PDF
 
-1. Upload a PDF.
-2. Process the document.
+1. Upload PDF's.
+2. Process the documents.
 3. Ask questions.
 4. Export AI report.
 
