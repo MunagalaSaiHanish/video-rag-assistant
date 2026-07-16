@@ -1,4 +1,3 @@
-import time
 import requests
 import yt_dlp
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -13,7 +12,33 @@ class TranscriptSegment:
 def get_transcript(video_id):
     try:
         api = YouTubeTranscriptApi()
-        return api.fetch(video_id)
+        try:
+            ts = api.list(video_id)
+            # Try manually created English transcript
+            try:
+                transcript = ts.find_manually_created_transcript(['en'])
+            except Exception:
+                # Try auto-generated English transcript
+                try:
+                    transcript = ts.find_generated_transcript(['en'])
+                except Exception:
+                    # Translate any other available language to English
+                    all_langs = list(ts._manually_created_transcripts.keys()) + list(ts._generated_transcripts.keys())
+                    transcript = ts.find_transcript(all_langs)
+                    if transcript.is_translatable:
+                        transcript = transcript.translate('en')
+            raw_transcript = transcript.fetch()
+        except Exception:
+            raw_transcript = api.fetch(video_id)
+
+        segments = []
+        for entry in raw_transcript:
+            segments.append(TranscriptSegment(
+                text=entry.get('text', ''),
+                start=entry.get('start', 0.0),
+                duration=entry.get('duration', 0.0)
+            ))
+        return segments
     except Exception:
         try:
             ydl_opts = {
