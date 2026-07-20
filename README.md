@@ -223,7 +223,7 @@ http://localhost:8501
 
 <td width="25%" valign="top">
 
-### 📄 PDF
+### 📄 Documents - PDFs, Docx, PPTs, Excel
 
 1. Upload PDF's.
 2. Process the documents.
